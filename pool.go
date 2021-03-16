@@ -1,35 +1,41 @@
 package socketcast
 
 import (
+	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/gobuffalo/logger"
 )
 
 type Pool struct {
 	hub     Hub
-	log     logger.Logger
+	Log     logger.Logger
 	Started bool
+	Config  Config
 }
 
 //CreatePool creates a new pool
 func CreatePool(config *Config) *Pool {
 	// prepare
-	config.Defoultify()
+	config.Defaultify()
 
 	//set
-	log := logger.NewLogger(config.loggerLevel)
+	log := logger.NewLogger(config.LoggerLevel)
 
 	//create hub
 	pool := &Pool{
 		hub: Hub{
-			broadcast:  make(chan []byte, config.hubBuffers.broadcast),
-			register:   make(chan *Client, config.hubBuffers.register),
-			unregister: make(chan *Client, config.hubBuffers.unregister),
+			broadcast:  make(chan BroadcastMessage, config.HubBuffers.broadcast),
+			register:   make(chan *Client, config.HubBuffers.register),
+			unregister: make(chan *Client, config.HubBuffers.unregister),
 			clients:    make(map[*Client]bool),
 		},
-		log: log,
+		Log: log,
 	}
+	pool.Config = *config
 	//setup
-	if !config.disableAutostart {
+	if !config.DisableAutostart {
 		go pool.Start()
 	} else {
 		log.Info("You have left autostart off, remember to start the pool")
@@ -40,9 +46,66 @@ func CreatePool(config *Config) *Pool {
 
 func (pool *Pool) Start() {
 	if pool.Started {
-		pool.log.Error("pool already started")
+		pool.Log.Error("pool already started")
 		return
 	}
 	pool.Started = true
-	pool.log.Info("Pool started")
+	pool.Log.Info("Pool started")
+	pool.run()
+}
+
+func (pool *Pool) run() {
+	h := &pool.hub
+	for {
+		select {
+		case client := <-h.register:
+			pool.Log.Debug("client registered")
+			h.clients[client] = true
+		case client := <-h.unregister:
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+				close(client.send)
+			}
+		case message := <-h.broadcast:
+			pool.Log.Debug("message to broadcast")
+			for client := range h.clients {
+				if !message.guard(client) {
+					pool.Log.Infof("Skipped client %d", client.Conn.RemoteAddr())
+					continue
+				}
+				select {
+				case client.send <- message.msg:
+				default:
+					close(client.send)
+					delete(h.clients, client)
+				}
+			}
+		}
+	}
+}
+
+func (pool *Pool) Serve(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &Client{Pool: pool, Conn: conn, send: make(chan []byte, 256)}
+	client.Start()
+	pool.Log.Infof("Connesso: %s", client.Conn.RemoteAddr().String())
+}
+
+func (pool *Pool) Broadcast(msg interface{}, guard clientGuard) {
+	if guard == nil {
+		guard = func(c *Client) bool { return true }
+	}
+	message, err := json.Marshal(msg)
+	if err != nil {
+		pool.Log.Error(err)
+		return
+	}
+	pool.Log.Debug("About to broadcast")
+	pool.hub.broadcast <- BroadcastMessage{
+		message, guard,
+	}
 }
