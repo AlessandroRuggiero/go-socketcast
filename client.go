@@ -47,7 +47,10 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		c.Pool.Config.OnMessage(c, message)
+		close := c.Pool.Config.OnMessage(c, message)
+		if close {
+			break
+		}
 		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		//c.pool.hub.broadcast <- message
 	}
