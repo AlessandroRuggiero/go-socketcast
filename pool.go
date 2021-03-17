@@ -97,7 +97,7 @@ func (pool *Pool) Serve(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{Pool: pool, Conn: conn, send: make(chan []byte, 256)}
+	client := &Client{Pool: pool, Conn: conn, send: make(chan []byte, 256), Metadata: make(map[string]interface{})}
 	client.Start()
 	pool.Log.Infof("Connesso: %s", client.Conn.RemoteAddr().String())
 }
