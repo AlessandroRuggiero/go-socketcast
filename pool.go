@@ -6,13 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gobuffalo/logger"
+	"github.com/gorilla/websocket"
 )
 
 type Pool struct {
-	hub     Hub
-	Log     logger.Logger
-	Started bool
-	Config  Config
+	hub      Hub
+	Log      logger.Logger
+	Started  bool
+	Config   Config
+	Upgrader websocket.Upgrader
 }
 
 //CreatePool creates a new pool
@@ -32,6 +34,11 @@ func CreatePool(config *Config) *Pool {
 			clients:    make(map[*Client]bool),
 		},
 		Log: log,
+		Upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin:     config.CeckOrigin,
+		},
 	}
 	pool.Config = *config
 	//setup
@@ -85,7 +92,7 @@ func (pool *Pool) run() {
 }
 
 func (pool *Pool) Serve(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := pool.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return

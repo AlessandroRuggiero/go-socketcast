@@ -2,8 +2,6 @@ package socketcast
 
 import (
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -24,10 +22,5 @@ var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
 
 type clientGuard func(c *Client) bool
