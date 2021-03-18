@@ -76,12 +76,24 @@ func (pool *Pool) run() {
 		case message := <-h.broadcast:
 			pool.Log.Debug("message to broadcast")
 			for client := range h.clients {
-				if !message.guard(client) {
+				if !message.Guard(client) {
 					pool.Log.Infof("Skipped client %d", client.Conn.RemoteAddr())
 					continue
 				}
+				if message.Msg == nil {
+					if message.Generator == nil {
+						pool.Log.Error("No messange and no generator for broadcast")
+						continue
+					}
+					msg, err := message.Generator(client)
+					if err != nil {
+						pool.Log.Error("Error during generator in broadcast", err)
+						continue
+					}
+					message.Msg = msg
+				}
 				select {
-				case client.send <- message.msg:
+				case client.send <- message.Msg:
 				default:
 					close(client.send)
 					delete(h.clients, client)
@@ -112,6 +124,23 @@ func (pool *Pool) Broadcast(msg interface{}, guard clientGuard) {
 	}
 	pool.Log.Debug("About to broadcast")
 	pool.hub.broadcast <- BroadcastMessage{
-		message, guard,
+		Msg: message, Guard: guard,
+	}
+}
+
+func (pool *Pool) ForEach(generator func(*Client) (Message, error), guard clientGuard) {
+	if guard == nil {
+		guard = func(c *Client) bool { return true }
+	}
+	pool.Log.Debug("About to run for each")
+	pool.hub.broadcast <- BroadcastMessage{
+		Guard: guard, Generator: func(c *Client) ([]byte, error) {
+			message, err := generator(c)
+			if err != nil {
+				pool.Log.Error(err)
+				return nil, err
+			}
+			return json.Marshal(message)
+		},
 	}
 }

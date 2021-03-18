@@ -8,6 +8,7 @@ type Hub struct {
 }
 
 type BroadcastMessage struct {
-	msg   []byte
-	guard clientGuard
+	Msg       []byte
+	Guard     clientGuard
+	Generator func(*Client) ([]byte, error)
 }
