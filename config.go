@@ -4,11 +4,12 @@ import "net/http"
 
 //Config holds config data for a new pool
 type Config struct {
-	LoggerLevel      string
-	HubBuffers       HubBuffer
-	DisableAutostart bool
-	OnMessage        func(c *Client, msg []byte) bool
-	CeckOrigin       func(r *http.Request) bool
+	LoggerLevel            string
+	HubBuffers             BufferSize
+	DisableAutostart       bool
+	DisableClientAutostart bool
+	OnMessage              func(c *Client, msg []byte) bool
+	CeckOrigin             func(r *http.Request) bool
 }
 
 func (config *Config) Defaultify() {

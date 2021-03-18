@@ -1,6 +1,6 @@
 package socketcast
 
-type HubBuffer struct {
+type BufferSize struct {
 	broadcast  int
 	register   int
 	unregister int
