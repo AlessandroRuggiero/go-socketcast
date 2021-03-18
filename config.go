@@ -5,7 +5,7 @@ import "net/http"
 //Config holds config data for a new pool
 type Config struct {
 	LoggerLevel            string
-	HubBuffers             BufferSize
+	Buffers                BufferSize
 	DisableAutostart       bool
 	DisableClientAutostart bool
 	OnMessage              func(c *Client, msg []byte) bool
@@ -24,5 +24,8 @@ func (config *Config) Defaultify() {
 	}
 	if config.CeckOrigin == nil {
 		config.CeckOrigin = func(r *http.Request) bool { return true }
+	}
+	if config.Buffers.Send == 0 {
+		config.Buffers.Send = 256
 	}
 }

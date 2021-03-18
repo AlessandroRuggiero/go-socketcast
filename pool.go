@@ -28,9 +28,9 @@ func CreatePool(config *Config) *Pool {
 	//create hub
 	pool := &Pool{
 		hub: Hub{
-			broadcast:  make(chan BroadcastMessage, config.HubBuffers.broadcast),
-			register:   make(chan *Client, config.HubBuffers.register),
-			unregister: make(chan *Client, config.HubBuffers.unregister),
+			broadcast:  make(chan BroadcastMessage, config.Buffers.Broadcast),
+			register:   make(chan *Client, config.Buffers.Register),
+			unregister: make(chan *Client, config.Buffers.Unregister),
 			clients:    make(map[*Client]bool),
 		},
 		Log: log,

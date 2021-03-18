@@ -1,7 +1,8 @@
 package socketcast
 
 type BufferSize struct {
-	broadcast  int
-	register   int
-	unregister int
+	Broadcast  int
+	Register   int
+	Unregister int
+	Send       int
 }

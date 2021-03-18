@@ -121,7 +121,8 @@ func (c *Client) Send(msg interface{}) error {
 }
 
 func newClient(pool *Pool, conn *websocket.Conn) *Client {
-	c := &Client{Pool: pool, Conn: conn, send: make(chan []byte, 256), Metadata: make(map[string]interface{})}
+	pool.Log.Debug("New client is being created")
+	c := &Client{Pool: pool, Conn: conn, send: make(chan []byte, pool.Config.Buffers.Send), Metadata: make(map[string]interface{})}
 	if !pool.Config.DisableClientAutostart {
 		c.Start()
 	}
