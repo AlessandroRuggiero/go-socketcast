@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
 type Client struct {
@@ -17,7 +18,7 @@ type Client struct {
 	send chan []byte
 
 	//Metadata of client
-	Metadata map[string]interface{}
+	Metadata cmap.ConcurrentMap
 
 	//Auth state of client
 	Auth Auth
@@ -122,7 +123,7 @@ func (c *Client) Send(msg interface{}) error {
 
 func newClient(pool *Pool, conn *websocket.Conn) *Client {
 	pool.Log.Debug("New client is being created")
-	c := &Client{Pool: pool, Conn: conn, send: make(chan []byte, pool.Config.Buffers.Send), Metadata: make(map[string]interface{})}
+	c := &Client{Pool: pool, Conn: conn, send: make(chan []byte, pool.Config.Buffers.Send), Metadata: cmap.New()}
 	if !pool.Config.DisableClientAutostart {
 		c.Start()
 	}
