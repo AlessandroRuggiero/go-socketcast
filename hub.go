@@ -10,5 +10,5 @@ type Hub struct {
 type BroadcastMessage struct {
 	Msg       []byte
 	Guard     clientGuard
-	Generator func(*Client) ([]byte, error)
+	Generator func(*Client) ([]byte, bool, error)
 }

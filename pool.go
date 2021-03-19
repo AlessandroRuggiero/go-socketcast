@@ -85,9 +85,13 @@ func (pool *Pool) run() {
 						pool.Log.Error("No messange and no generator for broadcast")
 						continue
 					}
-					msg, err := message.Generator(client)
+					msg, should, err := message.Generator(client)
 					if err != nil {
 						pool.Log.Error("Error during generator in broadcast", err)
+						continue
+					}
+					if !should {
+						pool.Log.Debugf("skipped %s because generator ask for it", client.Conn.RemoteAddr())
 						continue
 					}
 					message.Msg = msg
@@ -128,19 +132,27 @@ func (pool *Pool) Broadcast(msg interface{}, guard clientGuard) {
 	}
 }
 
-func (pool *Pool) ForEach(generator func(*Client) (Message, error), guard clientGuard) {
+func (pool *Pool) ForEach(generator func(*Client) (Message, bool, error), guard clientGuard) {
 	if guard == nil {
 		guard = func(c *Client) bool { return true }
 	}
 	pool.Log.Debug("About to run for each")
 	pool.hub.broadcast <- BroadcastMessage{
-		Guard: guard, Generator: func(c *Client) ([]byte, error) {
-			message, err := generator(c)
+		Guard: guard, Generator: func(c *Client) ([]byte, bool, error) {
+			message, send, err := generator(c)
 			if err != nil {
 				pool.Log.Error(err)
-				return nil, err
+				return nil, false, err
 			}
-			return json.Marshal(message)
+			if !send {
+				return nil, false, nil
+			}
+			d, err := json.Marshal(message)
+			if err != nil {
+				pool.Log.Error(err)
+				return nil, false, err
+			}
+			return d, true, nil
 		},
 	}
 }
