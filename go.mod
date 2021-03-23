@@ -1,6 +1,6 @@
 module github.com/AlessandroRuggiero/go-socketcast
 
-go 1.13
+go 1.16
 
 require (
 	github.com/gobuffalo/logger v1.0.3
