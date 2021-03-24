@@ -77,7 +77,7 @@ func (pool *Pool) run() {
 			pool.Log.Debug("message to broadcast")
 			for client := range h.clients {
 				if !message.Guard(client) {
-					pool.Log.Infof("Skipped client %d", client.Conn.RemoteAddr())
+					pool.Log.Infof("Skipped client %d", client.Conn.RemoteAddr().String())
 					continue
 				}
 				if message.Msg == nil {
@@ -91,7 +91,7 @@ func (pool *Pool) run() {
 						continue
 					}
 					if !should {
-						pool.Log.Debugf("skipped %s because generator ask for it", client.Conn.RemoteAddr())
+						pool.Log.Debugf("skipped %s because generator ask for it", client.Conn.RemoteAddr().String())
 						continue
 					}
 					message.Msg = msg
