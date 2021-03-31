@@ -18,9 +18,4 @@ const (
 	maxMessageSize = 512
 )
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
 type clientGuard func(c *Client) bool
