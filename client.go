@@ -43,15 +43,7 @@ func (c *Client) readPump() {
 				c.Pool.Log.Errorf("incomprehensible error: %v", err)
 				break
 			}
-			switch e.Code {
-			case websocket.CloseAbnormalClosure:
-				c.Pool.Log.Infof("Client %s disconnected (AbnormalClosure)", c.Conn.RemoteAddr().String())
-			case websocket.CloseGoingAway:
-				c.Pool.Log.Debug("Detected close ")
-				// nothing to do, just a normal close
-			default:
-				c.Pool.Log.Warnf("UnexpectedCloseError, closing connection: %s", err.Error())
-			}
+			analizeSocketError(c, e)
 			break
 		}
 		close = c.Pool.Config.OnMessage(c, message)
