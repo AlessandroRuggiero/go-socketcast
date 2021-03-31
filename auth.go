@@ -42,8 +42,8 @@ func (a *Auth) GetToken() string {
 	defer a.Unlock()
 	return a.Token
 }
-func (a *Auth) SetToken() string {
+func (a *Auth) SetToken(t string) {
 	a.Lock()
 	defer a.Unlock()
-	return a.Token
+	a.Token = t
 }
