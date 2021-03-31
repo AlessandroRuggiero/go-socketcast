@@ -2,6 +2,7 @@ package socketcast
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -9,6 +10,8 @@ import (
 )
 
 type Client struct {
+	sync.RWMutex
+
 	Pool *Pool
 
 	// The websocket connection.
@@ -22,6 +25,8 @@ type Client struct {
 
 	//Auth state of client
 	Auth Auth
+
+	Active bool
 }
 
 type Auth struct {
@@ -58,24 +63,32 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) Start() {
+	c.Active = true
 	c.Pool.hub.register <- c
-	c.Pool.Config.OnConnect(c)
 	go c.readPump()
 	go c.writePump()
+	c.Pool.Config.OnConnect(c)
 }
 
 func (c *Client) Destroy() {
+	c.Lock()
+	defer c.Unlock()
 	c.Pool.Log.Debugf("About to destroy client: %s", c.Conn.RemoteAddr().String())
 	c.Pool.hub.unregister <- c
+	c.Active = false
 	c.Conn.Close()
 	c.Pool.Log.Infof("Destroyed client: %s", c.Conn.RemoteAddr().String())
+	c.Pool.Config.OnDisconnect(c)
 }
 
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		c.Lock()
+		defer c.Unlock()
 		ticker.Stop()
 		c.Conn.Close()
+		c.Active = false
 	}()
 	for {
 		select {

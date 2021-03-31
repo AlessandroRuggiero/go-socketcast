@@ -10,6 +10,7 @@ type Config struct {
 	DisableClientAutostart bool
 	OnMessage              func(c *Client, msg []byte) bool
 	OnConnect              func(c *Client)
+	OnDisconnect           func(c *Client)
 	CeckOrigin             func(r *http.Request) bool
 }
 
@@ -25,6 +26,9 @@ func (config *Config) Defaultify() {
 	}
 	if config.OnConnect == nil {
 		config.OnConnect = defOnConnect
+	}
+	if config.OnDisconnect == nil {
+		config.OnDisconnect = defOnDisconnect
 	}
 	if config.Buffers.Send == 0 {
 		config.Buffers.Send = 256

@@ -8,5 +8,8 @@ func defOnMessage(c *Client, msg []byte) bool {
 }
 func defCeckOrigin(r *http.Request) bool { return true }
 func defOnConnect(c *Client) {
-	c.Pool.Log.Info("%s connesso", c.Conn.RemoteAddr().String())
+	c.Pool.Log.Debug("%s connected", c.Conn.RemoteAddr().String())
+}
+func defOnDisconnect(c *Client) {
+	c.Pool.Log.Debug("%s disconnected", c.Conn.RemoteAddr().String())
 }
