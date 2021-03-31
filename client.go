@@ -31,22 +31,30 @@ type Client struct {
 
 func (c *Client) readPump() {
 	defer c.Destroy()
+	var close bool
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			e, ok := err.(*websocket.CloseError)
+			if !ok {
+				c.Pool.Log.Errorf("incomprehensible error: %v", err)
+				break
+			}
+			switch e.Code {
+			case websocket.CloseAbnormalClosure:
+				c.Pool.Log.Infof("Client %s disconnected (AbnormalClosure)", c.Conn.RemoteAddr().String())
+			case websocket.CloseGoingAway:
+				c.Pool.Log.Debug("Detected close ")
+				// nothing to do, just a normal close
+			default:
 				c.Pool.Log.Warnf("UnexpectedCloseError, closing connection: %s", err.Error())
-			} else if err.Error() == "websocket: close 1006 (abnormal closure): unexpected EOF" {
-				c.Pool.Log.Infof("Client %s disconnected", c.Conn.RemoteAddr().String())
-			} else {
-				c.Pool.Log.Warn(err)
 			}
 			break
 		}
-		close := c.Pool.Config.OnMessage(c, message)
+		close = c.Pool.Config.OnMessage(c, message)
 		if close {
 			break
 		}
