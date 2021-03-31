@@ -1,6 +1,8 @@
 package socketcast
 
-import "net/http"
+import (
+	"net/http"
+)
 
 //Config holds config data for a new pool
 type Config struct {

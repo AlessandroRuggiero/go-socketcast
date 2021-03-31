@@ -20,6 +20,9 @@ type Pool struct {
 //CreatePool creates a new pool
 func CreatePool(config *Config) *Pool {
 	// prepare
+	if config == nil {
+		config = &Config{}
+	}
 	config.Defaultify()
 
 	//set
@@ -107,14 +110,14 @@ func (pool *Pool) run() {
 	}
 }
 
-func (pool *Pool) Serve(w http.ResponseWriter, r *http.Request) {
+func (pool *Pool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := pool.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	client := newClient(pool, conn)
-	pool.Log.Infof("Connesso: %s", client.Conn.RemoteAddr().String())
+	pool.Log.Infof("Connected: %s", client.Conn.RemoteAddr().String())
 }
 
 func (pool *Pool) Broadcast(msg interface{}, guard clientGuard) {
