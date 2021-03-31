@@ -9,6 +9,7 @@ type Config struct {
 	DisableAutostart       bool
 	DisableClientAutostart bool
 	OnMessage              func(c *Client, msg []byte) bool
+	OnConnect              func(c *Client)
 	CeckOrigin             func(r *http.Request) bool
 }
 
@@ -17,13 +18,13 @@ func (config *Config) Defaultify() {
 		config.LoggerLevel = "debug"
 	}
 	if config.OnMessage == nil {
-		config.OnMessage = func(c *Client, msg []byte) bool {
-			c.Pool.Log.Debug(string(msg))
-			return false
-		}
+		config.OnMessage = defOnMessage
 	}
 	if config.CeckOrigin == nil {
-		config.CeckOrigin = func(r *http.Request) bool { return true }
+		config.CeckOrigin = defCeckOrigin
+	}
+	if config.OnConnect == nil {
+		config.OnConnect = defOnConnect
 	}
 	if config.Buffers.Send == 0 {
 		config.Buffers.Send = 256

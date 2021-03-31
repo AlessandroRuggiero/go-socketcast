@@ -59,6 +59,7 @@ func (c *Client) readPump() {
 
 func (c *Client) Start() {
 	c.Pool.hub.register <- c
+	c.Pool.Config.OnConnect(c)
 	go c.readPump()
 	go c.writePump()
 }
