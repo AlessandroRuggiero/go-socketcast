@@ -29,11 +29,6 @@ type Client struct {
 	Active bool
 }
 
-type Auth struct {
-	Token         string
-	Authenticated bool
-}
-
 func (c *Client) readPump() {
 	defer func() {
 		c.Destroy()
@@ -57,8 +52,6 @@ func (c *Client) readPump() {
 		if close {
 			break
 		}
-		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		//c.pool.hub.broadcast <- message
 	}
 }
 
