@@ -51,6 +51,12 @@ func handle(c *socketcast.Client, msg []byte) bool {
 func main() {
 	pool := socketcast.CreatePool(&socketcast.Config{
 		OnMessage: handle, // callback to call when a message is recived
+		OnConnect: func(c *socketcast.Client) { // callback to call when a client connects
+			log.Println(c.Conn.RemoteAddr().String(), "entered the chat")
+		},
+		OnDisconnect: func(c *socketcast.Client) { // callback to call when a client disconnects
+			log.Println(c.Conn.RemoteAddr().String(), "left the chat")
+		},
 	})
 	http.Handle("/chat", pool) //expose socket connection endpoint
 	log.Fatal(http.ListenAndServe(":8080", nil))
