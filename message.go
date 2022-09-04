@@ -4,7 +4,7 @@ import "encoding/json"
 
 type Message struct {
 	Type     int                    `json:"type"`
-	Body     string                 `josn:"body"`
+	Body     string                 `json:"body"`
 	Metadata map[string]interface{} `json:"-"`
 }
 
